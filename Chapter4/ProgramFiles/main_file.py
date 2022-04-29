@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
 
 class Lagrange:
     ''' A class for building quadratic Lagrange polynomials.
@@ -45,9 +46,8 @@ class Lagrange:
 #     nodes = np.arange(xstart,xend+dx,dx)
 
 def assemble_global_stiffness(K,F,k,f,eid,elements):
-    gidx = [elements.iloc[eid,0],elements.iloc[eid,1]]
-    i = 0
-    j = 0
+    gidx = [elements.iloc[eid]['node1'],elements.iloc[eid]['node2']]
+    print(f'GIDX: {gidx}')
     for i,row in enumerate(gidx):
         F[row] += f[i]
         for j,col in enumerate(gidx):
@@ -69,12 +69,12 @@ def lin_shape_iso(xi_vector):
     Nx: matrix.  A matrix of the derivateves of N1 and N2, stored column-wise.
     '''
     n = len(xi_vector)
-    N = np.zeros((n,2))
-    Nx = np.zeros((n,2))
-    N[:,0] = (1-xi_vector)/2
-    N[:,1] = (1+xi_vector)/2
-    Nx[:,0] = -0.5
-    Nx[:,1] = 0.5
+    N = np.zeros((2,n))
+    Nx = np.zeros((2,n))
+    N[0,:] = (1-xi_vector)/2
+    N[1,:] = (1+xi_vector)/2
+    Nx[0,:] = -0.5
+    Nx[1,:] = 0.5
     return N, Nx
 
 def jacobian(x_vector,Nx):
@@ -110,7 +110,11 @@ def get_1d_gauss(n_points):
 
 if __name__ == '__main__':
     # Load files into dataframes
-    fpath = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    laptop = True
+    if laptop:
+        fpath = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/ProgramFiles'
+    else:
+        fpath = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
     fnames = ['elements.csv','ndprops.csv','nodes.csv','materials.txt','bfs.csv','bcs.csv']
     df_elements = pd.read_csv(os.path.join(fpath,fnames[0]),delimiter=' ')
     nelems = len(df_elements)
@@ -159,4 +163,22 @@ if __name__ == '__main__':
         K, F = assemble_global_stiffness(K,F,k,f,i,df_elements)
 
     for i in range(n_nodes):
-        if df_bcs.iloc[i][]
+        if df_bcs.iloc[i]['bc type'] == 1:
+            # print(f'Type 1 BC on node {i}')
+            penalty = abs(K[i,i]+1)*1e7
+            K[i,i] = penalty
+            print(K)
+            F[i] += df_bcs.iloc[i]['bc val']*penalty
+        if df_bcs.iloc[i]['bc type'] == 2:
+            print(f'Type 2 BC on node {i}')
+            F[i] += df_bcs.iloc[i]['bc val']*df_ndprops.iloc[i]['area']
+    u = np.linalg.solve(K,F)
+    print(u)
+    plt.figure(1)
+    plt.plot(u,marker='o',mfc='w',mec='k')
+    plt.xlabel('Node number')
+    plt.ylabel('Displacement (in)')
+    plt.grid()
+    plt.show()
+
+    
