@@ -65,8 +65,8 @@ def lin_shape_iso(xi_vector):
     
     Returns
     -------
-    N: matrix.  A matrix where the first column is N1(xi) and column 2 is N2(xi)
-    Nx: matrix.  A matrix of the derivateves of N1 and N2, stored column-wise.
+    N: matrix.  A matrix where the first row is N1(xi) and row 2 is N2(xi)
+    Nx: matrix.  A matrix of the derivateves of N1 and N2, stored row-wise.
     '''
     n = len(xi_vector)
     N = np.zeros((2,n))
@@ -181,4 +181,4 @@ if __name__ == '__main__':
     plt.grid()
     plt.show()
 
-    
+
