@@ -2,6 +2,8 @@ import numpy as np
 import csv
 import os
 
+from sympy import root
+
 def CreateMesh1D(xstart,xend,n_elements):
     dx = (xend-xstart)/n_elements
     nodes = np.zeros((n_elements+1,2),dtype='object')
@@ -12,7 +14,9 @@ def CreateMesh1D(xstart,xend,n_elements):
     return nodes
 
 def write_mesh(array,name='nodes.csv'):
-    path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    root_path = os.path.join(os.getcwd(),'GangLi','IntroToFEM','Chapter4')
+    path = os.path.join(root_path,'ProgramFiles')
+    # path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
     fname = os.path.join(path,name)
     headers = ['node','x-location']
     with open(fname,'w',newline='') as f:

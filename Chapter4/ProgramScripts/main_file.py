@@ -47,7 +47,6 @@ class Lagrange:
 
 def assemble_global_stiffness(K,F,k,f,eid,elements):
     gidx = [elements.iloc[eid]['node1'],elements.iloc[eid]['node2']]
-    print(f'GIDX: {gidx}')
     for i,row in enumerate(gidx):
         F[row] += f[i]
         for j,col in enumerate(gidx):
@@ -68,7 +67,10 @@ def lin_shape_iso(xi_vector):
     N: matrix.  A matrix where the first row is N1(xi) and row 2 is N2(xi)
     Nx: matrix.  A matrix of the derivateves of N1 and N2, stored row-wise.
     '''
-    n = len(xi_vector)
+    if isinstance(xi_vector,float):
+        n = 1
+    else:
+        n = len(xi_vector)
     N = np.zeros((2,n))
     Nx = np.zeros((2,n))
     N[0,:] = (1-xi_vector)/2
@@ -110,11 +112,28 @@ def get_1d_gauss(n_points):
 
 if __name__ == '__main__':
     # Load files into dataframes
-    laptop = True
-    if laptop:
-        fpath = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/ProgramFiles'
-    else:
-        fpath = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    print('Commencing the preprocessing section....')
+    root_path = os.path.join(os.getcwd(),'GangLi','IntroToFEM','Chapter4')
+    folders = ['ProgramScripts', 'ProgramFiles']
+    scripts = ['mesher1D.py','boundary_conditions.py','elements.py', \
+               'cross_sectional_area.py','body_forces.py']
+    # laptop = True
+    # if laptop:
+    #    fpath = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/ProgramScripts'
+    # else:
+    #     fpath = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramScripts'
+
+    # if laptop:
+    #     fpath = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/ProgramFiles'
+    # else:
+    #     fpath = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    exec(open(os.path.join(root_path,folders[0],scripts[0])).read())
+    exec(open(os.path.join(root_path,folders[0],scripts[2])).read())
+    exec(open(os.path.join(root_path,folders[0],scripts[1])).read())
+    exec(open(os.path.join(root_path,folders[0],scripts[3])).read())
+    exec(open(os.path.join(root_path,folders[0],scripts[4])).read())
+    fpath = os.path.join(root_path,folders[1])
+    print('Preprocessing complete, running main program.')
     fnames = ['elements.csv','ndprops.csv','nodes.csv','materials.txt','bfs.csv','bcs.csv']
     df_elements = pd.read_csv(os.path.join(fpath,fnames[0]),delimiter=' ')
     nelems = len(df_elements)
@@ -167,18 +186,38 @@ if __name__ == '__main__':
             # print(f'Type 1 BC on node {i}')
             penalty = abs(K[i,i]+1)*1e7
             K[i,i] = penalty
-            print(K)
             F[i] += df_bcs.iloc[i]['bc val']*penalty
         if df_bcs.iloc[i]['bc type'] == 2:
-            print(f'Type 2 BC on node {i}')
             F[i] += df_bcs.iloc[i]['bc val']*df_ndprops.iloc[i]['area']
-    u = np.linalg.solve(K,F)
-    print(u)
-    plt.figure(1)
-    plt.plot(u,marker='o',mfc='w',mec='k')
-    plt.xlabel('Node number')
-    plt.ylabel('Displacement (in)')
-    plt.grid()
+    u_nodes = np.linalg.solve(K,F)
+
+    n = 50
+    re = np.zeros((n*nelems,3))
+    k = 0
+    for i in range(nelems):
+        node1 = df_elements.iloc[i]['node1']
+        node2 = df_elements.iloc[i]['node2']
+        xi = np.linspace(-1,1,n)
+        for xi_ in xi:
+            N, Nx = lin_shape_iso(xi_)
+            u = u_nodes[node1]*N[0] + u_nodes[node2]*N[1]
+            J = jacobian([df_nodes.iloc[node1,1],df_nodes.iloc[node2,1]],Nx)
+            ux = u_nodes[node1]*Nx[0]/J + u_nodes[node2]*Nx[1]/J # u'(x), the strain
+            re[k,0] = df_nodes.iloc[node1,1]*N[0] + df_nodes.iloc[node2,1]*N[1]
+            re[k,1] = u
+            re[k,2] = E*ux
+            k += 1
+
+    fig, ax = plt.subplots(1,2)
+    ax[0].plot(u_nodes,marker='o',mfc='w',mec='k')
+    ax[0].set_xlabel('Node number')
+    ax[0].set_ylabel('Displacement (in)')
+    ax[0].set_title('Bar Displacement')
+    ax[0].grid()
+    ax[1].plot(re[:,0],re[:,2],'r--')
+    ax[1].set_xlabel('Position (in)')
+    ax[1].set_ylabel('Stress (psi)')
+    ax[1].set_title('Bar Stress')
+    ax[1].grid()
+    plt.tight_layout()
     plt.show()
-
-

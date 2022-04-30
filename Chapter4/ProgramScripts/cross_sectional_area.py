@@ -28,7 +28,9 @@ def write_elements(array,path,name='ndprops.csv'):
     return None
 
 if __name__ == '__main__':
-    path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    root_path = os.path.join(os.getcwd(),'GangLi','IntroToFEM','Chapter4')
+    path = os.path.join(root_path,'ProgramFiles')
+    # path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
     file = 'nodes.csv'
     arr = compute_area(path,file)
     write_elements(arr,path)

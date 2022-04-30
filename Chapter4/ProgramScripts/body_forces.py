@@ -10,11 +10,12 @@ def ComputeBodyForces(nodes_df):
         forces[i] = 500*(nodes_df.iloc[i]['x-location'])**(1/3)
     force_df['node'] = np.arange(len(nodes_df))
     force_df['force'] = forces
-    print(force_df)
     return force_df
 
 if __name__ == '__main__':
-    path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
+    root_path = os.path.join(os.getcwd(),'GangLi','IntroToFEM','Chapter4')
+    path = os.path.join(root_path,'ProgramFiles')
+    # path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/ProgramFiles'
     fname = 'nodes.csv'
     if not os.path.exists(os.path.join(path,fname)):
         raise Exception('Nodes file does not exist.')
