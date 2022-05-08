@@ -24,7 +24,7 @@ def lagrange(X):
         phi1 = (x-x0)/(x1-x0)
         dphi0 = 1/(x0-x1)
         dphi1 = 1/(x1-x0)
-        return [phi0, phi1], [dphi0, dphi1]
+        return [phi0, phi1], [dphi0*np.ones_like(x), dphi1*np.ones_like(x)], x
     elif deg ==2:
         x0, x1, x2 = X
         x = np.linspace(x0,x2)
@@ -34,7 +34,7 @@ def lagrange(X):
         dphi0 = (2*x-x1-x2)/((x0-x1)*(x0-x2))
         dphi1 = (2*x-x0-x2)/((x1-x0)*(x1-x2))
         dphi2 = (2*x-x0-x1)/((x1-x0)*(x1-x2))
-        return [phi0, phi1, phi2], [dphi0, dphi1, dphi2]
+        return [phi0, phi1, phi2], [dphi0, dphi1, dphi2], x
     else:
         raise ValueError('Currently supporting only first or second order Lagrange basis functions.')
 
@@ -199,13 +199,34 @@ if __name__ == '__main__':
     fnames = ['nodes.txt','elements.txt','global_nodes.txt','bcs.txt','elprops.txt','globals.txt']
     # run functions that create the files containing the mesh information
     mesher1D(xleft,xright,n_elements,deg)
-    element_indexer(5,2)
+    element_indexer(n_elements,deg)
     global_nodes(xleft,xright,n_elements,deg)
-    boundary_conditions(n_elements[2,0.1,1,0.0],deg)
+    boundary_conditions(n_elements,[2,0.1,1,0.0],deg)
     properties(n_elements,0.92,0.12)
     # load information from program files into dataframes
     df_dict = {}
     df_names = ['df_nodes','df_elems','df_glob_nodes','df_bcs','df_elprops','df_globals']
     for fname, df_name in zip(fnames,df_names):
         df_dict[df_name] = read_file(fname)
-    print(df_dict['df_globals'])
+    
+    ### MAIN LOOP ###
+    n_nodes = n_elements*deg + 1
+    K = np.zeros((n_nodes,n_nodes))
+    F = np.zeros(n_nodes)
+    for e in range(n_elements):
+        node_locs = df_dict['df_nodes'].iloc[e,1:]
+        N, Nx, xelem = lagrange(node_locs)
+        kcond = df_dict['df_elprops'].iloc[e]['kcond']
+        n = len(Nx)
+        k = np.zeros((n,n))
+        f = np.zeros(n)
+        for row in range(n):
+            for col in range(n):
+                I = Nx[row]*Nx[col]*kcond
+                k[row,col] = np.trapz(I,x=xelem)
+        glob_nodes = df_dict['df_elems'].iloc[e,1:]
+        for i,row in enumerate(glob_nodes):
+            for j,col in enumerate(glob_nodes):
+                K[row,col] += k[i,j]
+    print(K)
+        
