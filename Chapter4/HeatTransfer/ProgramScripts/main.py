@@ -33,7 +33,7 @@ def lagrange(X):
         phi2 = (x-x0)*(x-x1)/((x2-x0)*(x2-x1))
         dphi0 = (2*x-x1-x2)/((x0-x1)*(x0-x2))
         dphi1 = (2*x-x0-x2)/((x1-x0)*(x1-x2))
-        dphi2 = (2*x-x0-x1)/((x1-x0)*(x1-x2))
+        dphi2 = (2*x-x0-x1)/((x2-x0)*(x2-x1))
         return [phi0, phi1, phi2], [dphi0, dphi1, dphi2], x
     else:
         raise ValueError('Currently supporting only first or second order Lagrange basis functions.')
@@ -189,9 +189,9 @@ if __name__ == '__main__':
     # rod is 100 cm long.
     xleft = 0.0
     xright = 100.0
-    n_elements = 4
+    n_elements = 8
     # degree of basis functions
-    deg = 1
+    deg = 2
     # set my local working directory for retrieving and saving program files
     path = os.getcwd()
     if 'mattjwilliams' in path:
@@ -213,6 +213,7 @@ if __name__ == '__main__':
     n_nodes = n_elements*deg + 1
     K = np.zeros((n_nodes,n_nodes))
     F = np.zeros(n_nodes)
+    Tenv, r, kconv = df_dict['df_globals'].iloc[0]
     for e in range(n_elements):
         node_locs = df_dict['df_nodes'].iloc[e,1:]
         N, Nx, xelem = lagrange(node_locs)
@@ -221,12 +222,51 @@ if __name__ == '__main__':
         k = np.zeros((n,n))
         f = np.zeros(n)
         for row in range(n):
+            I = 2*kconv*Tenv/r*N[row]
+            f[row] = np.trapz(I,x=xelem)
             for col in range(n):
-                I = Nx[row]*Nx[col]*kcond
-                k[row,col] = np.trapz(I,x=xelem)
+                # This currently only has the first integral on the LHS
+                I1 = Nx[row]*Nx[col]*kcond
+                I2 = 2*kconv/r*N[row]*N[col]
+                k[row,col] = np.trapz(I1,x=xelem) + np.trapz(I2,x=xelem)
         glob_nodes = df_dict['df_elems'].iloc[e,1:]
         for i,row in enumerate(glob_nodes):
+            F[row] += f[i]
             for j,col in enumerate(glob_nodes):
                 K[row,col] += k[i,j]
-    print(K)
-        
+    for i in range(n_nodes):
+        bc_type = df_dict['df_bcs'].iloc[i]['type']
+        if bc_type == 2:
+            F[i] += df_dict['df_bcs'].iloc[i]['value']
+        if bc_type == 1:
+            penalty = abs(K[i,i]+1)*1e7
+            K[i,i] = penalty
+            F[i] = df_dict['df_bcs'].iloc[i]['value']*penalty
+    ### END MAIN LOOP ###
+
+    ### SOLUTION AND POST PROCESSING ###
+    temps = np.linalg.solve(K,F)
+ 
+    sol = []
+    xvals = []
+    for e in range(n_elements):
+        node_locs = df_dict['df_nodes'].iloc[e,1:]
+        N, Nx, xelem = lagrange(node_locs)
+        val_arr = np.zeros_like(xelem)
+        xvals.append(xelem)
+        for i in range(deg+1):
+            val_arr += N[i]*temps[deg*e+i]
+        sol.append(val_arr)
+
+
+sol_temps = np.stack(sol).flatten()
+sol_xvals = np.stack(xvals).flatten()
+plt.plot(sol_xvals,sol_temps)
+plt.grid()
+plt.xlim(sol_xvals[0],sol_xvals[-1])
+plt.ylim(0,30)
+plt.xlabel('Distance along bar (cm)')
+plt.ylabel('Temperature ($^oC$)')
+plt.title(f'FEM Solution with {n_elements} Elements and Degree {deg} Interpolants')
+plt.show()
+ 
