@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import csv
 
+### NOTE: Need to make filepaths for the laptop now ###
+
 def lagrange(X):
     '''
     Function for creating Lagrange basis functions.
@@ -49,6 +51,8 @@ def read_file(file):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     df = pd.read_csv(os.path.join(path,file),delimiter=' ')
     return df
 
@@ -78,6 +82,8 @@ def mesher1D(xstart,xend,n_elements,deg=1):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fname = 'nodes.txt'
     if deg == 1:
         headers = ['element','node0','node1']
@@ -106,6 +112,8 @@ def element_indexer(n_elements,deg):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fname = 'elements.txt'
     with open(os.path.join(path,fname),'w',newline='') as f:
         mywriter = csv.writer(f,delimiter=' ')
@@ -125,6 +133,8 @@ def global_nodes(xstart,xend,n_elements,deg=1):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fname = 'global_nodes.txt'
     headers = ['global node','x location']
     with open(os.path.join(path,fname),'w',newline='') as f:
@@ -154,6 +164,8 @@ def boundary_conditions(n_elements,bcs,deg=1):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fname = 'bcs.txt'
     headers = ['global node','type','value']
     with open(os.path.join(path,fname),'w',newline='') as f:
@@ -175,6 +187,8 @@ def properties(n_elements,k1,k2):
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fname = 'elprops.txt'
     headers = ['element','kcond']
     with open(os.path.join(path,fname),'w',newline='') as f:
@@ -196,6 +210,8 @@ if __name__ == '__main__':
     path = os.getcwd()
     if 'mattjwilliams' in path:
         path = '/Users/mattjwilliams/Documents/PythonStuff/FEM/GangLi/Chapter4/HeatTransfer/ProgramFiles'
+    else:
+        path = '/Users/mattwilliams/Documents/PythonProjects/FEM/GangLi/IntroToFEM/Chapter4/HeatTransfer/ProgramFiles'
     fnames = ['nodes.txt','elements.txt','global_nodes.txt','bcs.txt','elprops.txt','globals.txt']
     # run functions that create the files containing the mesh information
     mesher1D(xleft,xright,n_elements,deg)
